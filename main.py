@@ -1,35 +1,64 @@
-import requests
+import tkinter
+import tkinter.messagebox
+import pickle
 
-def get_weather_forecast(api_key, city_name):
-    base_url = "http://api.openweathermap.org/data/2.5/forecast"
-    params = {
-        "q": city_name,
-        "appid": api_key,
-        "units": "metric"  # You can change this to "imperial" for Fahrenheit
-    }
+root = tkinter.Tk()
+root.title("To-Do List by Ujjwal Kumar")
 
-    response = requests.get(base_url, params=params)
-
-    if response.status_code == 200:
-        data = response.json()
-        return data
+def add_task():
+    task = entry_task.get()
+    if task != "":
+        listbox_tasks.insert(tkinter.END, task)
+        entry_task.delete(0, tkinter.END)
     else:
-        print("Error fetching weather data.")
-        return None
+        tkinter.messagebox.showwarning(title="Warning!", message="You must enter a task.")
 
-def main():
-    api_key = "YOUR_API_KEY"  # Replace with your OpenWeatherMap API key
-    city_name = input("Enter city name: ")
+def delete_task():
+    try:
+        task_index = listbox_tasks.curselection()[0]
+        listbox_tasks.delete(task_index)
+    except:
+        tkinter.messagebox.showwarning(title="Warning!", message="You must select a task.")
 
-    weather_data = get_weather_forecast(api_key, city_name)
+def load_tasks():
+    try:
+        tasks = pickle.load(open("tasks.dat", "rb"))
+        listbox_tasks.delete(0, tkinter.END)
+        for task in tasks:
+            listbox_tasks.insert(tkinter.END, task)
+    except:
+        tkinter.messagebox.showwarning(title="Warning!", message="Cannot find tasks.dat.")
 
-    if weather_data:
-        print(f"Weather forecast for {city_name}:")
-        for forecast in weather_data["list"]:
-            timestamp = forecast["dt_txt"]
-            temperature = forecast["main"]["temp"]
-            weather_description = forecast["weather"][0]["description"]
-            print(f"At {timestamp}: Temperature: {temperature}°C, Description: {weather_description}")
+def save_tasks():
+    tasks = listbox_tasks.get(0, listbox_tasks.size())
+    pickle.dump(tasks, open("tasks.dat", "wb"))
 
-if __name__ == "__main__":
-    main()
+# Create GUI
+frame_tasks = tkinter.Frame(root)
+frame_tasks.pack()
+
+listbox_tasks = tkinter.Listbox(frame_tasks, height=10, width=50)
+listbox_tasks.pack(side=tkinter.LEFT)
+
+scrollbar_tasks = tkinter.Scrollbar(frame_tasks)
+scrollbar_tasks.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+
+listbox_tasks.config(yscrollcommand=scrollbar_tasks.set)
+scrollbar_tasks.config(command=listbox_tasks.yview)
+
+entry_task = tkinter.Entry(root, width=50)
+entry_task.pack()
+
+button_add_task = tkinter.Button(root, text="Add task", width=48, command=add_task)
+button_add_task.pack()
+
+button_delete_task = tkinter.Button(root, text="Delete task", width=48, command=delete_task)
+button_delete_task.pack()
+
+button_load_tasks = tkinter.Button(root, text="Load tasks", width=48, command=load_tasks)
+button_load_tasks.pack()
+
+button_save_tasks = tkinter.Button(root, text="Save tasks", width=48, command=save_tasks)
+button_save_tasks.pack()
+
+root.mainloop()
